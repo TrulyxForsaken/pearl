@@ -139,46 +139,45 @@ function list_package_dependencies() {
         done
     fi
 
-    LIST_PACKAGES_DEPS=(${queue[@]})
-
-    while [[ ${#queue[@]} > 0 ]]
+    LIST_PACKAGES_DEPS=()
+    for pkgname in ${queue[@]}
     do
-        # pop the first element
-        local pkgname=${queue[0]}
-        local queue=( "${queue[@]:1}" )
-
-        _package_full_name $pkgname
-        local pkgfullname=$RESULT
-        local reponame="${RESULT/\/*/}"
-        local pkgshortname="${RESULT/*\//}"
-        unset RESULT
-        PEARL_PKGDIR=$PEARL_HOME/packages/$pkgfullname
-        _init_package "$pkgfullname" "" $post_func
-        PEARL_PKGVARDIR=$PEARL_HOME/var/$pkgfullname
-        PEARL_PKGNAME=$pkgshortname
-        PEARL_PKGREPONAME=$reponame
-
-        local install_file=$PEARL_HOME/packages/$pkgfullname/pearl-config/install.sh
-
-        DEPENDS=()
-        [[ -e $install_file ]] && source $install_file
-        for dep in ${DEPENDS[@]}
-        do
-            _package_full_name $dep
-            local deppkgfullname=$RESULT
-            unset RESULT
-
-            [[ -z "$deppkgfullname" ]] && { warn "Skipping $pkgname is not in the repositories."; throw $NOT_IN_REPOSITORY_EXCEPTION; }
-
-            if ! contains_element ${deppkgfullname} ${LIST_PACKAGES_DEPS[@]}
-            then
-                queue+=("${deppkgfullname}")
-                LIST_PACKAGES_DEPS+=("${deppkgfullname}")
-            fi
-        done
-
-        unset DEPENDS
+        _list_package_dependencies $pkgname
     done
+
+    return 0
+}
+
+
+function _list_package_dependencies() {
+    local pkgname=$1
+    _package_full_name $pkgname
+    local pkgfullname=$RESULT
+    local reponame="${RESULT/\/*/}"
+    local pkgshortname="${RESULT/*\//}"
+    unset RESULT
+    PEARL_PKGDIR=$PEARL_HOME/packages/$pkgfullname
+    _init_package "$pkgfullname" "" $post_func
+    PEARL_PKGVARDIR=$PEARL_HOME/var/$pkgfullname
+    PEARL_PKGNAME=$pkgshortname
+    PEARL_PKGREPONAME=$reponame
+
+    local install_file=$PEARL_HOME/packages/$pkgfullname/pearl-config/install.sh
+
+    DEPENDS=()
+    [[ -e $install_file ]] && source $install_file
+
+    for dep in ${DEPENDS[@]}
+    do
+        _list_package_dependencies $dep
+    done
+    unset DEPENDS
+
+    if ! contains_element ${pkgfullname} ${LIST_PACKAGES_DEPS[@]}
+    then
+        LIST_PACKAGES_DEPS=("${LIST_PACKAGES_DEPS[@]}" "${pkgfullname}" )
+    fi
+
     return 0
 }
 

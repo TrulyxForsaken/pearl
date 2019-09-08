@@ -257,7 +257,7 @@ function test_list_package_dependencies_with_depends() {
     add_depends_in_install ls-colors pearl-ssh
 
     load_repo_first list_package_dependencies "ls-colors"
-    assertEquals "default/ls-colors default/pearl-ssh" "$(echo "${LIST_PACKAGES_DEPS[@]}")"
+    assertEquals "default/pearl-ssh default/ls-colors" "$(echo "${LIST_PACKAGES_DEPS[@]}")"
 }
 
 function test_list_package_dependencies_no_arguments() {
@@ -277,7 +277,8 @@ function test_list_package_dependencies_not_pkg_name() {
                       "pearl-ssh" "$HOME/my-pearl-ssh"
     add_depends_in_install ls-colors "pearl-ssh2"
 
-    assertCommandFailOnStatus 104 load_repo_first list_package_dependencies "ls-colors"
+    load_repo_first list_package_dependencies "ls-colors"
+    assertEquals " default/ls-colors" "$(echo "${LIST_PACKAGES_DEPS[@]}")"
 }
 
 function test_list_package_dependencies_duplicate_deps() {
@@ -289,7 +290,7 @@ function test_list_package_dependencies_duplicate_deps() {
     add_depends_in_install vim-rails "pearl-ssh"
 
     load_repo_first list_package_dependencies "ls-colors" "vim-rails"
-    assertEquals "default/ls-colors default/vim-rails default/pearl-ssh" "$(echo "${LIST_PACKAGES_DEPS[@]}")"
+    assertEquals "default/pearl-ssh default/ls-colors default/vim-rails" "$(echo "${LIST_PACKAGES_DEPS[@]}")"
 }
 
 function test_pearl_package_list_empty_pattern(){
